@@ -1,35 +1,54 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useState, useEffect } from "react";
+
+import Description from "./components/Description/Description";
+
+import Options from "./components/Options/Options";
+
+import Feedback from "./components/Feedback/Feedback";
+
+import Notification from "./components/Notification";
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [feedbackOptions, setFeedbackOptions] = useState(() => {
+    const feedbackLS = window.localStorage.getItem("savedFeedback");
+    return feedbackLS !== null
+      ? JSON.parse(feedbackLS)
+      : { good: 0, neutral: 0, bad: 0 };
+  });
+
+  useEffect(() => {
+    window.localStorage.setItem(
+      "savedFeedback",
+      JSON.stringify(feedbackOptions)
+    );
+  }, [feedbackOptions]);
+
+  const updateFeedback = (feedbackType) => {
+    feedbackType === "reset"
+      ? setFeedbackOptions({ good: 0, neutral: 0, bad: 0 })
+      : setFeedbackOptions({
+          ...feedbackOptions,
+          [feedbackType]: feedbackOptions[feedbackType] + 1,
+        });
+  };
+
+  const totalFeedback =
+    feedbackOptions.good + feedbackOptions.neutral + feedbackOptions.bad;
 
   return (
-    <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
-}
+    <div>
+      <Description />
+      <Options onFeedbackOptions={updateFeedback} total={totalFeedback} />
 
-export default App
+      {totalFeedback > 0 ? (
+        <Feedback
+          type={{ ...feedbackOptions }}
+          total={totalFeedback}
+        ></Feedback>
+      ) : (
+        <Notification />
+      )}
+    </div>
+  );
+}
+export default App;
